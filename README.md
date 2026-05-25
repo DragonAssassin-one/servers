@@ -149,6 +149,10 @@
 
 
 
+## 📖 中文学习指南
+
+由浅入深的 MCP 教程（基础 → 入门 → 进阶 → 高阶）：[docs/guide/README.md](docs/guide/README.md)
+
 ## 🚀 入门
 
 ### 使用本仓库中的 MCP 服务器
