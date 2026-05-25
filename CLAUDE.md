@@ -1,104 +1,104 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working with code in this repository.
+本文件为在 Claude Code 中处理本仓库代码时提供指引。
 
-## Project Overview
+## 项目概览
 
-Official MCP reference server implementations. This is an npm workspaces monorepo containing 7 servers (4 TypeScript, 3 Python) under `src/`. Each server is a standalone package published to npm or PyPI.
+官方 MCP 参考服务器实现。这是一个 npm workspaces 单体仓库，在 `src/` 下包含 7 个服务器（4 个 TypeScript、3 个 Python）。每个服务器都是独立包，发布到 npm 或 PyPI。
 
-## Monorepo Structure
+## 单体仓库结构
 
 ```
 src/
-  everything/          TS  @modelcontextprotocol/server-everything    (reference server, all MCP features)
-  filesystem/          TS  @modelcontextprotocol/server-filesystem    (file operations with Roots access control)
-  memory/              TS  @modelcontextprotocol/server-memory        (knowledge graph persistence)
-  sequentialthinking/  TS  @modelcontextprotocol/server-sequential-thinking  (step-by-step reasoning)
-  fetch/               Py  mcp-server-fetch                           (web content fetching)
-  git/                 Py  mcp-server-git                             (git repository operations)
-  time/                Py  mcp-server-time                            (timezone queries and conversion)
+  everything/          TS  @modelcontextprotocol/server-everything    （参考服务器，涵盖全部 MCP 功能）
+  filesystem/          TS  @modelcontextprotocol/server-filesystem    （文件操作，带 Roots 访问控制）
+  memory/              TS  @modelcontextprotocol/server-memory        （知识图谱持久化）
+  sequentialthinking/  TS  @modelcontextprotocol/server-sequential-thinking  （分步推理）
+  fetch/               Py  mcp-server-fetch                           （网页内容抓取）
+  git/                 Py  mcp-server-git                             （Git 仓库操作）
+  time/                Py  mcp-server-time                            （时区查询与转换）
 ```
 
-## Build & Test Commands
+## 构建与测试命令
 
-### TypeScript servers
+### TypeScript 服务器
 
 ```bash
-# Single server
+# 单个服务器
 cd src/<server> && npm ci && npm run build && npm test
 
-# All TS servers from root
+# 在根目录构建所有 TS 服务器
 npm install && npm run build
 ```
 
-- Build: `tsc` (target ES2022, module Node16, strict mode)
-- Tests: **vitest** with `@vitest/coverage-v8` (required for new tests)
-- Node version: **22**
+- 构建：`tsc`（目标 ES2022，模块 Node16，严格模式）
+- 测试：**vitest**，配合 `@vitest/coverage-v8`（新测试必须使用该框架）
+- Node 版本：**22**
 
-### Python servers
+### Python 服务器
 
 ```bash
 cd src/<server> && uv sync --frozen --all-extras --dev
 
-# Run tests (if tests/ or test/ directory exists)
+# 运行测试（若存在 tests/ 或 test/ 目录）
 uv run pytest
 
-# Type checking
+# 类型检查
 uv run pyright
 
-# Linting
+# 代码检查
 uv run ruff check .
 ```
 
-- Build system: **hatchling** (`uv build`)
-- Package manager: **uv** (not pip)
-- Python version: **>= 3.10** (per-server `.python-version` file)
-- Type checking: **pyright** (enforced in CI)
-- Linting: **ruff**
+- 构建系统：**hatchling**（`uv build`）
+- 包管理器：**uv**（不用 pip）
+- Python 版本：**>= 3.10**（各服务器有 `.python-version`）
+- 类型检查：**pyright**（CI 强制）
+- Lint：**ruff**
 
-## Code Style
+## 代码风格
 
 ### TypeScript
 
-- ES modules with `.js` extension in import paths
-- Strict TypeScript typing for all functions and variables
-- Zod schemas for tool input validation
-- 2-space indentation, trailing commas in multi-line objects
-- camelCase for variables/functions, PascalCase for types/classes, UPPER_CASE for constants
-- kebab-case for file names and registered tools/prompts/resources
-- Verb-first tool names (e.g., `get-file-info`, not `file-info`)
-- Imports grouped: external first, then internal
+- ES 模块，import 路径使用 `.js` 扩展名
+- 函数与变量使用严格 TypeScript 类型
+- 工具入参校验使用 Zod schema
+- 2 空格缩进，多行对象使用尾随逗号
+- 变量/函数 camelCase，类型/类 PascalCase，常量 UPPER_CASE
+- 文件名及注册的工具/prompts/resources 使用 kebab-case
+- 工具名以动词开头（如 `get-file-info`，而非 `file-info`）
+- import 分组：先外部，后内部
 
 ### Python
 
-- Type hints enforced via pyright
-- Async/await patterns (especially in fetch server with pytest-asyncio)
-- Follow existing module layout per server
+- 通过 pyright 强制类型注解
+- 使用 async/await（fetch 服务器尤其如此，配合 pytest-asyncio）
+- 遵循各服务器现有模块布局
 
-## Contributing Guidelines
+## 贡献指南
 
-**Accepted:** Bug fixes, usability improvements, enhancements demonstrating MCP protocol features (Resources, Prompts, Roots -- not just Tools).
+**欢迎：** Bug 修复、可用性改进、能展示 MCP 协议能力（Resources、Prompts、Roots，而不仅是 Tools）的增强。
 
-**Selective:** New features outside a server's core purpose or highly opinionated additions.
+**选择性接受：** 超出服务器核心职责或高度主观的新功能。
 
-**Not accepted:** New server implementations (use the [MCP Server Registry](https://github.com/modelcontextprotocol/registry)), README server listing changes.
+**不接受：** 新的服务器实现（请使用 [MCP Server Registry](https://github.com/modelcontextprotocol/registry)）、README 中的服务器列表变更。
 
-## CI/CD Pipeline
+## CI/CD 流水线
 
-Both TypeScript and Python workflows use **dynamic package detection** (find + jq matrix strategy):
+TypeScript 与 Python 工作流均使用 **动态包检测**（find + jq 矩阵策略）：
 
-1. `detect-packages` -- finds all `package.json` / `pyproject.toml` under `src/`
-2. `test` -- runs tests per package
-3. `build` -- compiles and type-checks per package
-4. `publish` -- on release events only (npm for TS, PyPI trusted publishing for Python)
+1. `detect-packages` — 在 `src/` 下查找所有 `package.json` / `pyproject.toml`
+2. `test` — 按包运行测试
+3. `build` — 按包编译与类型检查
+4. `publish` — 仅在发布事件时（TS 走 npm，Python 走 PyPI 可信发布）
 
-## MCP Protocol Reference
+## MCP 协议参考
 
-The repo is configured with an MCP docs server (`.mcp.json`) pointing to `https://modelcontextprotocol.io/mcp`. For schema details, reference `https://github.com/modelcontextprotocol/modelcontextprotocol/tree/main/schema` which contains versioned schemas in JSON and TypeScript formats.
+仓库通过 `.mcp.json` 配置了 MCP 文档服务器，指向 `https://modelcontextprotocol.io/mcp`。Schema 详见 `https://github.com/modelcontextprotocol/modelcontextprotocol/tree/main/schema`（含 JSON 与 TypeScript 版本化 schema）。
 
-## Key Patterns
+## 关键模式
 
-- Each server registers capabilities via `registerTools(server)`, `registerResources(server)`, `registerPrompts(server)` functions
-- Tool annotations: set `readOnlyHint`, `idempotentHint`, `destructiveHint` per MCP spec
-- Transport support: stdio (default), SSE (deprecated), Streamable HTTP
-- All PRs are reviewed against the [PR template](.github/pull_request_template.md) checklist -- ensure MCP docs are read, security best practices followed, and changes tested with an LLM client
+- 各服务器通过 `registerTools(server)`、`registerResources(server)`、`registerPrompts(server)` 注册能力
+- 工具注解：按 MCP 规范设置 `readOnlyHint`、`idempotentHint`、`destructiveHint`
+- 传输：stdio（默认）、SSE（已弃用）、Streamable HTTP
+- 所有 PR 按 [PR 模板](.github/pull_request_template.md) 检查 — 需阅读 MCP 文档、遵循安全最佳实践，并用 LLM 客户端测试变更

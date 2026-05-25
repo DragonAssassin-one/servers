@@ -1,11 +1,11 @@
-# Everything Server - Project Structure
+# Everything 服务器 - 项目结构
 
-**[Architecture](architecture.md)
-| Project Structure
-| [Startup Process](startup.md)
-| [Server Features](features.md)
-| [Extension Points](extension.md)
-| [How It Works](how-it-works.md)**
+**[架构](architecture.md)
+| 项目结构
+| [启动流程](startup.md)
+| [服务器功能](features.md)
+| [扩展点](extension.md)
+| [工作原理](how-it-works.md)**
 
 ```
 src/everything
@@ -62,130 +62,130 @@ src/everything
          └── streamableHttp.ts
 ```
 
-# Project Contents
+# 项目内容
 
-## `src/everything`:
+## `src/everything`：
 
 ### `index.ts`
 
-- CLI entry point that selects and runs a specific transport module based on the first CLI argument: `stdio`, `sse`, or `streamableHttp`.
+- CLI 入口点，根据第一个 CLI 参数选择并运行指定传输模块：`stdio`、`sse` 或 `streamableHttp`。
 
 ### `AGENTS.md`
 
-- Directions for Agents/LLMs explaining coding guidelines and how to appropriately extend the server.
+- 面向代理/LLM 的指引，说明编码规范及如何正确扩展服务器。
 
 ### `package.json`
 
-- Package metadata and scripts:
-  - `build`: TypeScript compile to `dist/`, copies `docs/` into `dist/` and marks the compiled entry scripts as executable.
-  - `start:stdio`, `start:sse`, `start:streamableHttp`: Run built transports from `dist/`.
-- Declares dependencies on `@modelcontextprotocol/sdk`, `express`, `cors`, `zod`, etc.
+- 包元数据与脚本：
+  - `build`：将 TypeScript 编译到 `dist/`，将 `docs/` 复制到 `dist/`，并将编译后的入口脚本标记为可执行。
+  - `start:stdio`、`start:sse`、`start:streamableHttp`：从 `dist/` 运行已构建的传输。
+- 声明对 `@modelcontextprotocol/sdk`、`express`、`cors`、`zod` 等的依赖。
 
 ### `docs/`
 
 - `architecture.md`
-  - This document.
+  - 本文档。
 - `server-instructions.md`
-  - Human‑readable instructions intended to be passed to the client/LLM as for guidance on server use. Loaded by the server at startup and returned in the "initialize" exchange.
+  - 面向人类可读的说明，旨在作为客户端/LLM 使用服务器的指引。在启动时由服务器加载，并在 "initialize" 交换中返回。
 
 ### `prompts/`
 
 - `index.ts`
-  - `registerPrompts(server)` orchestrator; delegates to prompt factory/registration methods from in individual prompt files.
+  - `registerPrompts(server)` 编排器；委托各提示文件中的提示工厂/注册方法。
 - `simple.ts`
-  - Registers `simple-prompt`: a prompt with no arguments that returns a single user message.
+  - 注册 `simple-prompt`：无参数提示，返回单条用户消息。
 - `args.ts`
-  - Registers `args-prompt`: a prompt with two arguments (`city` required, `state` optional) used to compose a message.
+  - 注册 `args-prompt`：带两个参数（`city` 必填，`state` 可选）的提示，用于组合消息。
 - `completions.ts`
-  - Registers `completable-prompt`: a prompt whose arguments support server-driven completions using the SDK’s `completable(...)` helper (e.g., completing `department` and context-aware `name`).
+  - 注册 `completable-prompt`：其参数支持使用 SDK 的 `completable(...)` 辅助函数进行服务端驱动的补全（例如补全 `department` 及上下文相关的 `name`）。
 - `resource.ts`
-  - Exposes `registerEmbeddedResourcePrompt(server)` which registers `resource-prompt` — a prompt that accepts `resourceType` ("Text" or "Blob") and `resourceId` (integer), and embeds a dynamically generated resource of the requested type within the returned messages. Internally reuses helpers from `resources/templates.ts`.
+  - 暴露 `registerEmbeddedResourcePrompt(server)`，注册 `resource-prompt`——接受 `resourceType`（"Text" 或 "Blob"）和 `resourceId`（整数）的提示，并在返回的消息中嵌入按请求类型动态生成的资源。内部复用 `resources/templates.ts` 中的辅助函数。
 
 ### `resources/`
 
 - `index.ts`
-  - `registerResources(server)` orchestrator; delegates to resource factory/registration methods from individual resource files.
+  - `registerResources(server)` 编排器；委托各资源文件中的资源工厂/注册方法。
 - `templates.ts`
-  - Registers two dynamic, template‑driven resources using `ResourceTemplate`:
-    - Text: `demo://resource/dynamic/text/{index}` (MIME: `text/plain`)
-    - Blob: `demo://resource/dynamic/blob/{index}` (MIME: `application/octet-stream`, Base64 payload)
-  - The `{index}` path variable must be a finite positive integer. Content is generated on demand with a timestamp.
-  - Exposes helpers `textResource(uri, index)`, `textResourceUri(index)`, `blobResource(uri, index)`, and `blobResourceUri(index)` so other modules can construct and embed dynamic resources directly (e.g., from prompts).
+  - 使用 `ResourceTemplate` 注册两个动态、模板驱动的资源：
+    - Text：`demo://resource/dynamic/text/{index}`（MIME：`text/plain`）
+    - Blob：`demo://resource/dynamic/blob/{index}`（MIME：`application/octet-stream`，Base64 载荷）
+  - `{index}` 路径变量必须是有限正整数。内容按需生成并带时间戳。
+  - 暴露辅助函数 `textResource(uri, index)`、`textResourceUri(index)`、`blobResource(uri, index)` 和 `blobResourceUri(index)`，供其他模块直接构造并嵌入动态资源（例如从提示中）。
 - `files.ts`
-  - Registers static file-based resources for each file in the `docs/` folder.
-  - URIs follow the pattern: `demo://resource/static/document/<filename>`.
-  - Serves markdown files as `text/markdown`, `.txt` as `text/plain`, `.json` as `application/json`, others default to `text/plain`.
+  - 为 `docs/` 文件夹中的每个文件注册静态基于文件的资源。
+  - URI 遵循模式：`demo://resource/static/document/<filename>`。
+  - Markdown 以 `text/markdown` 提供，`.txt` 为 `text/plain`，`.json` 为 `application/json`，其他默认为 `text/plain`。
 
 ### `server/`
 
 - `index.ts`
-  - Server factory that creates an `McpServer` with declared capabilities, loads server instructions, and registers tools, prompts, and resources.
-  - Sets resource subscription handlers via `setSubscriptionHandlers(server)`.
-  - Exposes `{ server, cleanup }` to the chosen transport. Cleanup stops any running intervals in the server when the transport disconnects.
+  - 服务器工厂，创建带已声明能力的 `McpServer`，加载服务器说明，并注册工具、提示和资源。
+  - 通过 `setSubscriptionHandlers(server)` 设置资源订阅处理器。
+  - 向所选传输暴露 `{ server, cleanup }`。传输断开时，`cleanup` 停止服务器中所有运行中的间隔。
 - `logging.ts`
-  - Implements simulated logging. Periodically sends randomized log messages at various levels to the connected client session. Started/stopped on demand via a dedicated tool.
+  - 实现模拟日志。定期向已连接客户端会话发送各级别的随机日志消息。可通过专用工具按需启动/停止。
 
 ### `tools/`
 
 - `index.ts`
-  - `registerTools(server)` orchestrator; delegates to tool factory/registration methods in individual tool files.
+  - `registerTools(server)` 编排器；委托各工具文件中的工具工厂/注册方法。
 - `echo.ts`
-  - Registers an `echo` tool that takes a message and returns `Echo: {message}`.
+  - 注册 `echo` 工具，接受消息并返回 `Echo: {message}`。
 - `get-annotated-message.ts`
-  - Registers a `get-annotated-message` tool which demonstrates content-level annotations. Emits a primary `text` message with content `annotations` (`priority`, `audience`) that vary by `messageType` (`"error" | "success" | "debug"`), and optionally includes an annotated `image` (tiny PNG) when `includeImage` is true. All tools in this server include tool-level annotations (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`).
+  - 注册 `get-annotated-message` 工具，演示内容级注解。发出主 `text` 消息，其内容 `annotations`（`priority`、`audience`）随 `messageType`（`"error" | "success" | "debug"`）变化；当 `includeImage` 为 true 时可选包含带注解的 `image`（小型 PNG）。本服务器中所有工具均包含工具级注解（`readOnlyHint`、`destructiveHint`、`idempotentHint`、`openWorldHint`）。
 - `get-env.ts`
-  - Registers a `get-env` tool that returns the current process environment variables as formatted JSON text; useful for debugging configuration.
+  - 注册 `get-env` 工具，将当前进程环境变量以格式化 JSON 文本返回；便于调试配置。
 - `get-resource-links.ts`
-  - Registers a `get-resource-links` tool that returns an intro `text` block followed by multiple `resource_link` items.
+  - 注册 `get-resource-links` 工具，返回引导性 `text` 块及多个 `resource_link` 项。
 - `get-resource-reference.ts`
-  - Registers a `get-resource-reference` tool that returns a reference for a selected dynamic resource.
+  - 注册 `get-resource-reference` 工具，返回所选动态资源的引用。
 - `get-roots-list.ts`
-  - Registers a `get-roots-list` tool that returns the last list of roots sent by the client.
+  - 注册 `get-roots-list` 工具，返回客户端发送的最近一次根目录列表。
 - `gzip-file-as-resource.ts`
-  - Registers a `gzip-file-as-resource` tool that fetches content from a URL or data URI, compresses it, and then either:
-    - returns a `resource_link` to a session-scoped resource (default), or
-    - returns an inline `resource` with the gzipped data. The resource will be still discoverable for the duration of the session via `resources/list`.
-  - Uses `resources/session.ts` to register the gzipped blob as a per-session resource at a URI like `demo://resource/session/<name>` with `mimeType: application/gzip`.
-  - Environment controls:
-    - `GZIP_MAX_FETCH_SIZE` (bytes, default 10 MiB)
-    - `GZIP_MAX_FETCH_TIME_MILLIS` (ms, default 30000)
-    - `GZIP_ALLOWED_DOMAINS` (comma-separated allowlist; empty means all domains allowed)
+  - 注册 `gzip-file-as-resource` 工具，从 URL 或 data URI 抓取内容、压缩，然后：
+    - 返回指向会话作用域资源的 `resource_link`（默认），或
+    - 返回内联 `resource`（含 gzip 数据）。该资源在会话存续期间仍可通过 `resources/list` 发现。
+  - 使用 `resources/session.ts` 将 gzip blob 注册为按会话资源，URI 形如 `demo://resource/session/<name>`，`mimeType: application/gzip`。
+  - 环境变量控制：
+    - `GZIP_MAX_FETCH_SIZE`（字节，默认 10 MiB）
+    - `GZIP_MAX_FETCH_TIME_MILLIS`（毫秒，默认 30000）
+    - `GZIP_ALLOWED_DOMAINS`（逗号分隔允许列表；为空表示允许所有域名）
 - `simulate-research-query.ts`
-  - Registers a `simulate-research-query` task-based tool that demonstrates the MCP Tasks feature (SEP-1686). Simulates a multi-stage research operation with progress updates. If the query is marked as ambiguous and the client supports elicitation, it pauses mid-execution to request clarification via `elicitation/create`. Uses `server.experimental.tasks.registerToolTask()` with `execution: { taskSupport: "required" }`.
+  - 注册基于任务的 `simulate-research-query` 工具，演示 MCP Tasks 功能（SEP-1686）。模拟多阶段研究操作并带进度更新。若查询被标记为模糊且客户端支持引导，则在执行中途通过 `elicitation/create` 暂停以请求澄清。使用 `server.experimental.tasks.registerToolTask()`，配置 `execution: { taskSupport: "required" }`。
 - `trigger-elicitation-request.ts`
-  - Registers a `trigger-elicitation-request` tool that sends an `elicitation/create` request to the client/LLM and returns the elicitation result.
+  - 注册 `trigger-elicitation-request` 工具，向客户端/LLM 发送 `elicitation/create` 请求并返回引导结果。
 - `trigger-elicitation-request-async.ts`
-  - Registers a `trigger-elicitation-request-async` tool that demonstrates bidirectional MCP tasks for elicitation. Sends an elicitation request with task metadata, then polls the client's `tasks/get` endpoint for completion status before fetching the final result.
+  - 注册 `trigger-elicitation-request-async` 工具，演示用于引导的双向 MCP 任务。发送带任务元数据的引导请求，然后轮询客户端的 `tasks/get` 端点获取完成状态，再获取最终结果。
 - `trigger-sampling-request.ts`
-  - Registers a `trigger-sampling-request` tool that sends a `sampling/createMessage` request to the client/LLM and returns the sampling result.
+  - 注册 `trigger-sampling-request` 工具，向客户端/LLM 发送 `sampling/createMessage` 请求并返回采样结果。
 - `trigger-sampling-request-async.ts`
-  - Registers a `trigger-sampling-request-async` tool that demonstrates bidirectional MCP tasks for sampling. Sends a sampling request with task metadata, then polls the client's `tasks/get` endpoint for completion status before fetching the final result.
+  - 注册 `trigger-sampling-request-async` 工具，演示用于采样的双向 MCP 任务。发送带任务元数据的采样请求，然后轮询客户端的 `tasks/get` 端点获取完成状态，再获取最终结果。
 - `get-structured-content.ts`
-  - Registers a `get-structured-content` tool that demonstrates structuredContent block responses.
+  - 注册 `get-structured-content` 工具，演示 structuredContent 块响应。
 - `get-sum.ts`
-  - Registers a `get-sum` tool with a Zod input schema that sums two numbers `a` and `b` and returns the result.
+  - 注册 `get-sum` 工具，使用 Zod 输入 schema 对两个数 `a` 和 `b` 求和并返回结果。
 - `get-tiny-image.ts`
-  - Registers a `get-tiny-image` tool, which returns a tiny PNG MCP logo as an `image` content item, along with surrounding descriptive `text` items.
+  - 注册 `get-tiny-image` 工具，以 `image` 内容项返回小型 PNG MCP 徽标，前后附带描述性 `text` 项。
 - `trigger-long-running-operation.ts`
-  - Registers a `trigger-long-running-operation` tool that simulates a long-running task over a specified `duration` (seconds) and number of `steps`; emits `notifications/progress` updates when the client supplies a `progressToken`.
+  - 注册 `trigger-long-running-operation` 工具，在指定 `duration`（秒）和 `steps` 数量下模拟长时间运行任务；当客户端提供 `progressToken` 时发出 `notifications/progress` 更新。
 - `toggle-simulated-logging.ts`
-  - Registers a `toggle-simulated-logging` tool, which starts or stops simulated logging for the invoking session.
+  - 注册 `toggle-simulated-logging` 工具，为调用会话启动或停止模拟日志。
 - `toggle-subscriber-updates.ts`
-  - Registers a `toggle-subscriber-updates` tool, which starts or stops simulated resource subscription update checks for the invoking session.
+  - 注册 `toggle-subscriber-updates` 工具，为调用会话启动或停止模拟资源订阅更新检查。
 
 ### `transports/`
 
 - `stdio.ts`
-  - Starts a `StdioServerTransport`, created the server via `createServer()`, and connects it.
-  - Handles `SIGINT` to close cleanly and calls `cleanup()` to remove any live intervals.
+  - 启动 `StdioServerTransport`，通过 `createServer()` 创建服务器并连接。
+  - 处理 `SIGINT` 以干净关闭，并调用 `cleanup()` 移除所有活动间隔。
 - `sse.ts`
-  - Express server exposing:
-    - `GET /sse` to establish an SSE connection per session.
-    - `POST /message` for client messages.
-  - Manages multiple connected clients via a transport map.
-  - Starts an `SSEServerTransport`, created the server via `createServer()`, and connects it to a new transport.
-  - On server disconnect, calls `cleanup()` to remove any live intervals.
+  - Express 服务器暴露：
+    - `GET /sse` 为每个会话建立 SSE 连接。
+    - `POST /message` 用于客户端消息。
+  - 通过传输映射管理多个已连接客户端。
+  - 启动 `SSEServerTransport`，通过 `createServer()` 创建服务器并连接到新传输。
+  - 服务器断开时调用 `cleanup()` 移除所有活动间隔。
 - `streamableHttp.ts`
-  - Express server exposing a single `/mcp` endpoint for POST (JSON‑RPC), GET (SSE stream), and DELETE (session termination) using `StreamableHTTPServerTransport`.
-  - Uses an `InMemoryEventStore` for resumable sessions and tracks transports by `sessionId`.
-  - Connects a fresh server instance on initialization POST and reuses the transport for subsequent requests.
+  - Express 服务器在单一 `/mcp` 端点上暴露 POST（JSON-RPC）、GET（SSE 流）和 DELETE（会话终止），使用 `StreamableHTTPServerTransport`。
+  - 使用 `InMemoryEventStore` 实现可恢复会话，并按 `sessionId` 跟踪传输。
+  - 在初始化 POST 时连接新的服务器实例，后续请求复用该传输。

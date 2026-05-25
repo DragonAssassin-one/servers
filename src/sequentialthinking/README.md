@@ -1,77 +1,78 @@
 # Sequential Thinking MCP Server
 
-An MCP server implementation that provides a tool for dynamic and reflective problem-solving through a structured thinking process.
+提供结构化思考流程工具的 MCP 服务器实现，用于动态、反思式地解决问题。
 
-## Features
+## 特性
 
-- Break down complex problems into manageable steps
-- Revise and refine thoughts as understanding deepens
-- Branch into alternative paths of reasoning
-- Adjust the total number of thoughts dynamically
-- Generate and verify solution hypotheses
+- 将复杂问题拆解为可管理的步骤
+- 随着理解加深修订与精炼思路
+- 分支探索替代推理路径
+- 动态调整思考总步数
+- 生成并验证解决方案假设
 
-## Tool
+## 工具
 
 ### sequential_thinking
 
-Facilitates a detailed, step-by-step thinking process for problem-solving and analysis.
+为问题求解与分析提供详细的逐步思考过程。
 
-**Inputs:**
-- `thought` (string): The current thinking step
-- `nextThoughtNeeded` (boolean): Whether another thought step is needed
-- `thoughtNumber` (integer): Current thought number
-- `totalThoughts` (integer): Estimated total thoughts needed
-- `isRevision` (boolean, optional): Whether this revises previous thinking
-- `revisesThought` (integer, optional): Which thought is being reconsidered
-- `branchFromThought` (integer, optional): Branching point thought number
-- `branchId` (string, optional): Branch identifier
-- `needsMoreThoughts` (boolean, optional): If more thoughts are needed
+**输入：**
+- `thought`（string）：当前思考步骤
+- `nextThoughtNeeded`（boolean）：是否还需要下一步思考
+- `thoughtNumber`（integer）：当前步骤编号
+- `totalThoughts`（integer）：预估所需总步数
+- `isRevision`（boolean，可选）：是否修订先前思考
+- `revisesThought`（integer，可选）：正在重新考虑的步骤编号
+- `branchFromThought`（integer，可选）：分支起点步骤编号
+- `branchId`（string，可选）：分支标识
+- `needsMoreThoughts`（boolean，可选）：是否需要更多思考步骤
 
-## Usage
+## 用法
 
-The Sequential Thinking tool is designed for:
-- Breaking down complex problems into steps
-- Planning and design with room for revision
-- Analysis that might need course correction
-- Problems where the full scope might not be clear initially
-- Tasks that need to maintain context over multiple steps
-- Situations where irrelevant information needs to be filtered out
+Sequential Thinking 工具适用于：
 
-In practice, you do not call `sequential_thinking` directly by hand unless your client exposes raw tool calls. Instead, connect the server to an MCP-aware host and ask the model to think through a problem step by step. The host can then decide to call the tool one or more times while it works.
+- 将复杂问题拆解为步骤
+- 可修订的规划与设计
+- 可能需要纠偏的分析
+- 初始范围不清晰的任务
+- 需在多步中保持上下文的任务
+- 需要过滤无关信息的场景
 
-### What it looks like in use
+实践中，除非客户端暴露原始工具调用，否则通常不会手动调用 `sequential_thinking`。应将服务器连接到支持 MCP 的主机，让模型逐步思考问题；主机可在工作时多次调用该工具。
 
-Example prompts that typically benefit from this tool:
+### 使用时的表现
 
-- `Plan a database migration from PostgreSQL 14 to 16, list risks, and revise the plan if downtime exceeds 5 minutes.`
-- `Debug why this deployment only fails in production and show your reasoning step by step.`
-- `Compare three architecture options for a file sync engine and branch if one assumption turns out to be wrong.`
+通常适合使用该工具的示例提示：
 
-### How to tell it is working
+- `规划从 PostgreSQL 14 迁移到 16，列出风险；若停机超过 5 分钟则修订计划。`
+- `逐步推理：为何该部署仅在生产环境失败。`
+- `比较文件同步引擎的三种架构；若某假设错误则分支讨论。`
 
-If your host or inspector shows tool activity, you should see repeated calls to `sequential_thinking` with fields such as:
+### 如何判断正在工作
+
+若主机或 inspector 显示工具活动，应看到对 `sequential_thinking` 的重复调用，字段包括：
 
 - `thought`
 - `thoughtNumber`
 - `totalThoughts`
 - `nextThoughtNeeded`
 
-When the reasoning changes course, you may also see revision or branching fields like `isRevision`, `revisesThought`, `branchFromThought`, or `branchId`.
+当推理改变方向时，还可能看到 `isRevision`、`revisesThought`、`branchFromThought` 或 `branchId` 等修订/分支字段。
 
-### Quick manual verification
+### 快速手动验证
 
-After installing the server in your MCP host:
+在 MCP 主机中安装服务器后：
 
-1. Restart or reload the host so it reconnects to the server.
-2. Confirm the `sequential_thinking` tool appears in the host's MCP tool list or inspector.
-3. Ask the host to solve a non-trivial problem in a step-by-step way.
-4. Verify that the host invokes the tool multiple times instead of returning a one-shot answer.
+1. 重启或重新加载主机以重新连接服务器。
+2. 确认主机的 MCP 工具列表或 inspector 中出现 `sequential_thinking`。
+3. 让主机以逐步方式解决一个非平凡问题。
+4. 确认主机多次调用该工具，而非一次性返回答案。
 
-## Configuration
+## 配置
 
-### Usage with Claude Desktop
+### 在 Claude Desktop 中使用
 
-Add this to your `claude_desktop_config.json`:
+添加到 `claude_desktop_config.json`：
 
 #### npx
 
@@ -89,7 +90,7 @@ Add this to your `claude_desktop_config.json`:
 }
 ```
 
-On Windows, use `cmd /c` to launch `npx`:
+在 Windows 上，用 `cmd /c` 启动 `npx`：
 
 ```json
 {
@@ -125,27 +126,27 @@ On Windows, use `cmd /c` to launch `npx`:
 }
 ```
 
-To disable logging of thought information set env var: `DISABLE_THOUGHT_LOGGING` to `true`.
+要禁用思考信息日志，将环境变量 `DISABLE_THOUGHT_LOGGING` 设为 `true`。
 
-### Usage with VS Code
+### 在 VS Code 中使用
 
-For quick installation, click one of the installation buttons below...
+快速安装可点击下方安装按钮之一……
 
 [![Install with NPX in VS Code](https://img.shields.io/badge/VS_Code-NPM-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=sequentialthinking&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40modelcontextprotocol%2Fserver-sequential-thinking%22%5D%7D) [![Install with NPX in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-NPM-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=sequentialthinking&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40modelcontextprotocol%2Fserver-sequential-thinking%22%5D%7D&quality=insiders)
 
 [![Install with Docker in VS Code](https://img.shields.io/badge/VS_Code-Docker-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=sequentialthinking&config=%7B%22command%22%3A%22docker%22%2C%22args%22%3A%5B%22run%22%2C%22--rm%22%2C%22-i%22%2C%22mcp%2Fsequentialthinking%22%5D%7D) [![Install with Docker in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Docker-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=sequentialthinking&config=%7B%22command%22%3A%22docker%22%2C%22args%22%3A%5B%22run%22%2C%22--rm%22%2C%22-i%22%2C%22mcp%2Fsequentialthinking%22%5D%7D&quality=insiders)
 
-For manual installation, you can configure the MCP server using one of these methods:
+手动安装可用以下方式配置 MCP 服务器：
 
-**Method 1: User Configuration (Recommended)**
-Add the configuration to your user-level MCP configuration file. Open the Command Palette (`Ctrl + Shift + P`) and run `MCP: Open User Configuration`. This will open your user `mcp.json` file where you can add the server configuration.
+**方式 1：用户级配置（推荐）**
+将配置添加到用户级 MCP 配置文件。打开命令面板（`Ctrl + Shift + P`），运行 `MCP: Open User Configuration`，在 `mcp.json` 中添加服务器配置。
 
-**Method 2: Workspace Configuration**
-Alternatively, you can add the configuration to a file called `.vscode/mcp.json` in your workspace. This will allow you to share the configuration with others.
+**方式 2：工作区配置**
+也可将配置写入工作区的 `.vscode/mcp.json`，便于与他人共享。
 
-> For more details about MCP configuration in VS Code, see the [official VS Code MCP documentation](https://code.visualstudio.com/docs/copilot/customization/mcp-servers).
+> VS Code 中 MCP 配置的更多说明见 [官方 VS Code MCP 文档](https://code.visualstudio.com/docs/copilot/customization/mcp-servers)。
 
-For NPX installation:
+NPX 安装：
 
 ```json
 {
@@ -161,7 +162,7 @@ For NPX installation:
 }
 ```
 
-On Windows, use:
+Windows 上使用：
 
 ```json
 {
@@ -179,7 +180,7 @@ On Windows, use:
 }
 ```
 
-For Docker installation:
+Docker 安装：
 
 ```json
 {
@@ -197,9 +198,9 @@ For Docker installation:
 }
 ```
 
-### Usage with Codex CLI
+### 在 Codex CLI 中使用
 
-Run the following:
+运行：
 
 #### npx
 
@@ -207,14 +208,14 @@ Run the following:
 codex mcp add sequential-thinking npx -y @modelcontextprotocol/server-sequential-thinking
 ```
 
-## Building
+## 构建
 
-Docker:
+Docker：
 
 ```bash
 docker build -t mcp/sequentialthinking -f src/sequentialthinking/Dockerfile .
 ```
 
-## License
+## 许可证
 
-This MCP server is licensed under the MIT License. This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the MIT License. For more details, please see the LICENSE file in the project repository.
+本 MCP 服务器采用 MIT 许可证。你可自由使用、修改和分发，须遵守 MIT 许可条款。详见项目仓库中的 LICENSE 文件。

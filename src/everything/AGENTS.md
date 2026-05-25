@@ -1,52 +1,52 @@
-# MCP "Everything" Server - Development Guidelines
+# MCP "Everything" 服务器 - 开发指南
 
-## Build, Test & Run Commands
+## 构建、测试与运行命令
 
-- Build: `npm run build` - Compiles TypeScript to JavaScript
-- Watch mode: `npm run watch` - Watches for changes and rebuilds automatically
-- Run STDIO server: `npm run start:stdio` - Starts the MCP server using stdio transport
-- Run SSE server: `npm run start:sse` - Starts the MCP server with SSE transport
-- Run StreamableHttp server: `npm run start:streamableHttp` - Starts the MCP server with StreamableHttp transport
-- Prepare release: `npm run prepare` - Builds the project for publishing
+- 构建：`npm run build` - 将 TypeScript 编译为 JavaScript
+- 监视模式：`npm run watch` - 监视变更并自动重新构建
+- 运行 STDIO 服务器：`npm run start:stdio` - 使用 stdio 传输启动 MCP 服务器
+- 运行 SSE 服务器：`npm run start:sse` - 使用 SSE 传输启动 MCP 服务器
+- 运行 StreamableHttp 服务器：`npm run start:streamableHttp` - 使用 StreamableHttp 传输启动 MCP 服务器
+- 准备发布：`npm run prepare` - 为发布构建项目
 
-## Code Style Guidelines
+## 代码风格指南
 
-- Use ES modules with `.js` extension in import paths
-- Strictly type all functions and variables with TypeScript
-- Follow zod schema patterns for tool input validation
-- Prefer async/await over callbacks and Promise chains
-- Place all imports at top of file, grouped by external then internal
-- Use descriptive variable names that clearly indicate purpose
-- Implement proper cleanup for timers and resources in server shutdown
-- Handle errors with try/catch blocks and provide clear error messages
-- Use consistent indentation (2 spaces) and trailing commas in multi-line objects
-- Match existing code style, import order, and module layout in the respective folder.
-- Use camelCase for variables/functions,
-- Use PascalCase for types/classes,
-- Use UPPER_CASE for constants
-- Use kebab-case for file names and registered tools, prompts, and resources.
-- Use verbs for tool names, e.g., `get-annotated-message` instead of `annotated-message`
+- 在 import 路径中使用 ES 模块及 `.js` 扩展名
+- 使用 TypeScript 为所有函数和变量提供严格类型
+- 工具入参校验遵循 zod schema 模式
+- 优先使用 async/await，而非回调或 Promise 链
+- 将所有 import 放在文件顶部，按外部依赖、内部模块分组
+- 使用能清楚表明用途的描述性变量名
+- 在服务器关闭时正确清理定时器和资源
+- 使用 try/catch 处理错误，并提供清晰的错误消息
+- 使用一致的缩进（2 空格）及多行对象尾随逗号
+- 与各自文件夹中现有的代码风格、import 顺序和模块布局保持一致
+- 变量/函数使用 camelCase
+- 类型/类使用 PascalCase
+- 常量使用 UPPER_CASE
+- 文件名及注册的工具、prompts、resources 使用 kebab-case
+- 工具名以动词开头，例如 `get-annotated-message` 而非 `annotated-message`
 
-## Extending the Server
+## 扩展服务器
 
-The Everything Server is designed to be extended at well-defined points.
-See [Extension Points](docs/extension.md) and [Project Structure](docs/structure.md).
-The server factory is `src/everything/server/index.ts` and registers all features during startup as well as handling post-connection setup.
+Everything 服务器设计为可在明确定义的扩展点上进行扩展。
+参见 [扩展点](docs/extension.md) 与 [项目结构](docs/structure.md)。
+服务器工厂位于 `src/everything/server/index.ts`，在启动时注册所有功能，并处理连接后的设置。
 
-### High-level
+### 概览
 
-- Tools live under `src/everything/tools/` and are registered via `registerTools(server)`.
-- Resources live under `src/everything/resources/` and are registered via `registerResources(server)`.
-- Prompts live under `src/everything/prompts/` and are registered via `registerPrompts(server)`.
-- Subscriptions and simulated update routines are under `src/everything/resources/subscriptions.ts`.
-- Logging helpers are under `src/everything/server/logging.ts`.
-- Transport managers are under `src/everything/transports/`.
+- 工具位于 `src/everything/tools/`，通过 `registerTools(server)` 注册。
+- 资源位于 `src/everything/resources/`，通过 `registerResources(server)` 注册。
+- 提示位于 `src/everything/prompts/`，通过 `registerPrompts(server)` 注册。
+- 订阅与模拟更新例程位于 `src/everything/resources/subscriptions.ts`。
+- 日志辅助函数位于 `src/everything/server/logging.ts`。
+- 传输管理器位于 `src/everything/transports/`。
 
-### When adding a new feature
+### 添加新功能时
 
-- Follow the existing file/module pattern in its folder (naming, exports, and registration function).
-- Export a `registerX(server)` function that registers new items with the MCP SDK in the same style as existing ones.
-- Wire your new module into the central index (e.g., update `tools/index.ts`, `resources/index.ts`, or `prompts/index.ts`).
-- Ensure schemas (for tools) are accurate JSON Schema and include helpful descriptions and examples.
-  `server/index.ts` and usages in `logging.ts` and `subscriptions.ts`.
-- Keep the docs in `src/everything/docs/` up to date if you add or modify noteworthy features.
+- 遵循其文件夹中现有的文件/模块模式（命名、导出和注册函数）。
+- 导出 `registerX(server)` 函数，以与现有模块相同的方式向 MCP SDK 注册新项。
+- 将新模块接入中央索引（例如更新 `tools/index.ts`、`resources/index.ts` 或 `prompts/index.ts`）。
+- 确保（工具的）schema 为准确的 JSON Schema，并包含有用的描述和示例。
+  `server/index.ts` 以及 `logging.ts` 和 `subscriptions.ts` 中的用法。
+- 若添加或修改值得注意的功能，请保持 `src/everything/docs/` 中的文档为最新。

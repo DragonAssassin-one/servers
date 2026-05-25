@@ -1,216 +1,215 @@
-# Filesystem MCP Server
+# 文件系统 MCP 服务器
 
-Node.js server implementing Model Context Protocol (MCP) for filesystem operations.
+实现 Model Context Protocol (MCP) 文件系统操作的 Node.js 服务器。
 
-## Features
+## 功能
 
-- Read/write files
-- Create/list/delete directories
-- Move files/directories
-- Search files
-- Get file metadata
-- Dynamic directory access control via [Roots](https://modelcontextprotocol.io/docs/learn/client-concepts#roots)
+- 读/写文件
+- 创建/列出/删除目录
+- 移动文件/目录
+- 搜索文件
+- 获取文件元数据
+- 通过 [Roots](https://modelcontextprotocol.io/docs/learn/client-concepts#roots) 动态控制目录访问
 
-## Directory Access Control
+## 目录访问控制
 
-The server uses a flexible directory access control system. Directories can be specified via command-line arguments or dynamically via [Roots](https://modelcontextprotocol.io/docs/learn/client-concepts#roots).
+服务器使用灵活的目录访问控制系统。可通过命令行参数或 [Roots](https://modelcontextprotocol.io/docs/learn/client-concepts#roots) 动态指定目录。
 
-### Method 1: Command-line Arguments
-Specify Allowed directories when starting the server:
+### 方法 1：命令行参数
+启动服务器时指定允许的目录：
 ```bash
 mcp-server-filesystem /path/to/dir1 /path/to/dir2
 ```
 
-### Method 2: MCP Roots (Recommended)
-MCP clients that support [Roots](https://modelcontextprotocol.io/docs/learn/client-concepts#roots) can dynamically update the Allowed directories. 
+### 方法 2：MCP Roots（推荐）
+支持 [Roots](https://modelcontextprotocol.io/docs/learn/client-concepts#roots) 的 MCP 客户端可动态更新允许的目录。
 
-Roots notified by Client to Server, completely replace any server-side Allowed directories when provided.
+客户端通知服务器的 Roots 会完全替换服务器端配置的允许目录（当提供时）。
 
-**Important**: If server starts without command-line arguments AND client doesn't support roots protocol (or provides empty roots), the server will throw an error during initialization.
+**重要**：若服务器启动时未提供命令行参数，且客户端不支持 roots 协议（或提供空 roots），服务器将在初始化期间抛出错误。
 
-This is the recommended method, as this enables runtime directory updates via `roots/list_changed` notifications without server restart, providing a more flexible and modern integration experience.
+这是推荐方法，因为它支持通过 `roots/list_changed` 通知在运行时更新目录而无需重启服务器，提供更灵活、更现代的集成体验。
 
-### How It Works
+### 工作原理
 
-The server's directory access control follows this flow:
+服务器的目录访问控制遵循以下流程：
 
-1. **Server Startup**
-   - Server starts with directories from command-line arguments (if provided)
-   - If no arguments provided, server starts with empty allowed directories
+1. **服务器启动**
+   - 服务器使用命令行参数中的目录启动（若已提供）
+   - 若未提供参数，服务器以空的允许目录列表启动
 
-2. **Client Connection & Initialization**
-   - Client connects and sends `initialize` request with capabilities
-   - Server checks if client supports roots protocol (`capabilities.roots`)
+2. **客户端连接与初始化**
+   - 客户端连接并发送带能力的 `initialize` 请求
+   - 服务器检查客户端是否支持 roots 协议（`capabilities.roots`）
    
-3. **Roots Protocol Handling** (if client supports roots)
-   - **On initialization**: Server requests roots from client via `roots/list`
-   - Client responds with its configured roots
-   - Server replaces ALL allowed directories with client's roots
-   - **On runtime updates**: Client can send `notifications/roots/list_changed`
-   - Server requests updated roots and replaces allowed directories again
+3. **Roots 协议处理**（若客户端支持 roots）
+   - **初始化时**：服务器通过 `roots/list` 向客户端请求 roots
+   - 客户端返回其配置的 roots
+   - 服务器用客户端的 roots 替换所有允许的目录
+   - **运行时更新**：客户端可发送 `notifications/roots/list_changed`
+   - 服务器请求更新的 roots 并再次替换允许的目录
 
-4. **Fallback Behavior** (if client doesn't support roots)
-   - Server continues using command-line directories only
-   - No dynamic updates possible
+4. **回退行为**（若客户端不支持 roots）
+   - 服务器继续使用仅来自命令行的目录
+   - 无法进行动态更新
 
-5. **Access Control**
-   - All filesystem operations are restricted to allowed directories
-   - Use `list_allowed_directories` tool to see current directories
-   - Server requires at least ONE allowed directory to operate
+5. **访问控制**
+   - 所有文件系统操作仅限于允许的目录
+   - 使用 `list_allowed_directories` 工具查看当前目录
+   - 服务器需要至少一个允许的目录才能运行
 
-**Note**: The server will only allow operations within directories specified either via `args` or via Roots.
+**注意**：服务器仅允许在通过 `args` 或 Roots 指定的目录内进行操作。
 
 
 
 ## API
 
-### Tools
+### 工具
 
 - **read_text_file**
-  - Read complete contents of a file as text
-  - Inputs:
+  - 以文本形式读取文件的完整内容
+  - 输入：
     - `path` (string)
-    - `head` (number, optional): First N lines
-    - `tail` (number, optional): Last N lines
-  - Always treats the file as UTF-8 text regardless of extension
-  - Cannot specify both `head` and `tail` simultaneously
+    - `head` (number, optional): 前 N 行
+    - `tail` (number, optional): 后 N 行
+  - 无论扩展名如何，始终将文件视为 UTF-8 文本
+  - 不能同时指定 `head` 和 `tail`
 
 - **read_media_file**
-  - Read an image or audio file
-  - Inputs:
+  - 读取图像或音频文件
+  - 输入：
     - `path` (string)
-  - Streams the file and returns base64 data with the corresponding MIME type
+  - 流式传输文件并返回带相应 MIME 类型的 base64 数据
 
 - **read_multiple_files**
-  - Read multiple files simultaneously
-  - Input: `paths` (string[])
-  - Failed reads won't stop the entire operation
+  - 同时读取多个文件
+  - 输入：`paths` (string[])
+  - 读取失败不会中止整个操作
 
 - **write_file**
-  - Create new file or overwrite existing (exercise caution with this)
-  - Inputs:
-    - `path` (string): File location
-    - `content` (string): File content
+  - 创建新文件或覆盖现有文件（使用此工具时请谨慎）
+  - 输入：
+    - `path` (string): 文件位置
+    - `content` (string): 文件内容
 
 - **edit_file**
-  - Make selective edits using advanced pattern matching and formatting
-  - Features:
-    - Line-based and multi-line content matching
-    - Whitespace normalization with indentation preservation
-    - Multiple simultaneous edits with correct positioning
-    - Indentation style detection and preservation
-    - Git-style diff output with context
-    - Preview changes with dry run mode
-  - Inputs:
-    - `path` (string): File to edit
-    - `edits` (array): List of edit operations
-      - `oldText` (string): Text to search for (can be substring)
-      - `newText` (string): Text to replace with
-    - `dryRun` (boolean): Preview changes without applying (default: false)
-  - Returns detailed diff and match information for dry runs, otherwise applies changes
-  - Best Practice: Always use dryRun first to preview changes before applying them
+  - 使用高级模式匹配和格式化进行选择性编辑
+  - 特性：
+    - 基于行和多行内容匹配
+    - 保留缩进的空白符规范化
+    - 多个同时编辑且定位正确
+    - 缩进风格检测与保留
+    - 带上下文的 Git 风格 diff 输出
+    - 试运行模式预览更改
+  - 输入：
+    - `path` (string): 要编辑的文件
+    - `edits` (array): 编辑操作列表
+      - `oldText` (string): 要搜索的文本（可为子串）
+      - `newText` (string): 替换文本
+    - `dryRun` (boolean): 预览更改而不应用（默认：false）
+  - 试运行时返回详细 diff 和匹配信息，否则应用更改
+  - 最佳实践：应用更改前始终先使用 dryRun 预览
 
 - **create_directory**
-  - Create new directory or ensure it exists
-  - Input: `path` (string)
-  - Creates parent directories if needed
-  - Succeeds silently if directory exists
+  - 创建新目录或确保其存在
+  - 输入：`path` (string)
+  - 必要时创建父目录
+  - 若目录已存在则静默成功
 
 - **list_directory**
-  - List directory contents with [FILE] or [DIR] prefixes
-  - Input: `path` (string)
+  - 列出目录内容，带 [FILE] 或 [DIR] 前缀
+  - 输入：`path` (string)
 
 - **list_directory_with_sizes**
-  - List directory contents with [FILE] or [DIR] prefixes, including file sizes
-  - Inputs:
-    - `path` (string): Directory path to list
-    - `sortBy` (string, optional): Sort entries by "name" or "size" (default: "name")
-  - Returns detailed listing with file sizes and summary statistics
-  - Shows total files, directories, and combined size
+  - 列出目录内容，带 [FILE] 或 [DIR] 前缀及文件大小
+  - 输入：
+    - `path` (string): 要列出的目录路径
+    - `sortBy` (string, optional): 按 "name" 或 "size" 排序条目（默认："name"）
+  - 返回含文件大小和汇总统计的详细列表
+  - 显示文件、目录总数及合计大小
 
 - **move_file**
-  - Move or rename files and directories
-  - Inputs:
+  - 移动或重命名文件和目录
+  - 输入：
     - `source` (string)
     - `destination` (string)
-  - Fails if destination exists
+  - 若目标已存在则失败
 
 - **search_files**
-  - Recursively search for files/directories that match or do not match patterns
-  - Inputs:
-    - `path` (string): Starting directory
-    - `pattern` (string): Search pattern
-    - `excludePatterns` (string[]): Exclude any patterns.
-  - Glob-style pattern matching
-  - Returns full paths to matches
+  - 递归搜索匹配或不匹配模式的文件/目录
+  - 输入：
+    - `path` (string): 起始目录
+    - `pattern` (string): 搜索模式
+    - `excludePatterns` (string[]): 排除的模式。
+  - Glob 风格模式匹配
+  - 返回匹配的完整路径
 
 - **directory_tree**
-  - Get recursive JSON tree structure of directory contents
-  - Inputs:
-    - `path` (string): Starting directory
-    - `excludePatterns` (string[]): Exclude any patterns. Glob formats are supported.
-  - Returns:
-    - JSON array where each entry contains:
-      - `name` (string): File/directory name
-      - `type` ('file'|'directory'): Entry type
-      - `children` (array): Present only for directories
-        - Empty array for empty directories
-        - Omitted for files
-  - Output is formatted with 2-space indentation for readability
+  - 获取目录内容的递归 JSON 树结构
+  - 输入：
+    - `path` (string): 起始目录
+    - `excludePatterns` (string[]): 排除的模式。支持 Glob 格式。
+  - 返回：
+    - JSON 数组，每个条目包含：
+      - `name` (string): 文件/目录名
+      - `type` ('file'|'directory'): 条目类型
+      - `children` (array): 仅目录存在
+        - 空目录为空数组
+        - 文件省略
+  - 输出使用 2 空格缩进以提高可读性
     
 - **get_file_info**
-  - Get detailed file/directory metadata
-  - Input: `path` (string)
-  - Returns:
-    - Size
-    - Creation time
-    - Modified time
-    - Access time
-    - Type (file/directory)
-    - Permissions
+  - 获取详细的文件/目录元数据
+  - 输入：`path` (string)
+  - 返回：
+    - 大小
+    - 创建时间
+    - 修改时间
+    - 访问时间
+    - 类型（file/directory）
+    - 权限
 
 - **list_allowed_directories**
-  - List all directories the server is allowed to access
-  - No input required
-  - Returns:
-    - Directories that this server can read/write from
+  - 列出服务器允许访问的所有目录
+  - 无需输入
+  - 返回：
+    - 本服务器可读写的目录
 
-### Tool annotations (MCP hints)
+### 工具注解（MCP 提示）
 
-This server sets [MCP ToolAnnotations](https://modelcontextprotocol.io/specification/2025-03-26/server/tools#toolannotations)
-on each tool so clients can:
+本服务器在每个工具上设置 [MCP ToolAnnotations](https://modelcontextprotocol.io/specification/2025-03-26/server/tools#toolannotations)，以便客户端可以：
 
-- Distinguish **read‑only** tools from write‑capable tools.
-- Understand which write operations are **idempotent** (safe to retry with the same arguments).
-- Highlight operations that may be **destructive** (overwriting or heavily mutating data).
+- 区分**只读**工具与可写工具。
+- 了解哪些写操作是**幂等**的（使用相同参数重试是安全的）。
+- 标出可能具有**破坏性**的操作（覆盖或大量修改数据）。
 
-The mapping for filesystem tools is:
+文件系统工具的映射如下：
 
-| Tool                        | readOnlyHint | idempotentHint | destructiveHint | Notes                                            |
+| Tool                        | readOnlyHint | idempotentHint | destructiveHint | 说明                                            |
 |-----------------------------|--------------|----------------|-----------------|--------------------------------------------------|
-| `read_text_file`            | `true`       | –              | –               | Pure read                                       |
-| `read_media_file`           | `true`       | –              | –               | Pure read                                       |
-| `read_multiple_files`       | `true`       | –              | –               | Pure read                                       |
-| `list_directory`            | `true`       | –              | –               | Pure read                                       |
-| `list_directory_with_sizes` | `true`       | –              | –               | Pure read                                       |
-| `directory_tree`            | `true`       | –              | –               | Pure read                                       |
-| `search_files`              | `true`       | –              | –               | Pure read                                       |
-| `get_file_info`             | `true`       | –              | –               | Pure read                                       |
-| `list_allowed_directories`  | `true`       | –              | –               | Pure read                                       |
-| `create_directory`          | `false`      | `true`         | `false`         | Re‑creating the same dir is a no‑op             |
-| `write_file`                | `false`      | `true`         | `true`          | Overwrites existing files                       |
-| `edit_file`                 | `false`      | `false`        | `true`          | Re‑applying edits can fail or double‑apply      |
-| `move_file`                 | `false`      | `false`        | `true`          | Deletes source file                             |
+| `read_text_file`            | `true`       | –              | –               | 纯读取                                           |
+| `read_media_file`           | `true`       | –              | –               | 纯读取                                           |
+| `read_multiple_files`       | `true`       | –              | –               | 纯读取                                           |
+| `list_directory`            | `true`       | –              | –               | 纯读取                                           |
+| `list_directory_with_sizes` | `true`       | –              | –               | 纯读取                                           |
+| `directory_tree`            | `true`       | –              | –               | 纯读取                                           |
+| `search_files`              | `true`       | –              | –               | 纯读取                                           |
+| `get_file_info`             | `true`       | –              | –               | 纯读取                                           |
+| `list_allowed_directories`  | `true`       | –              | –               | 纯读取                                           |
+| `create_directory`          | `false`      | `true`         | `false`         | 重复创建同一目录为无操作                         |
+| `write_file`                | `false`      | `true`         | `true`          | 覆盖现有文件                                     |
+| `edit_file`                 | `false`      | `false`        | `true`          | 重复应用编辑可能失败或重复应用                   |
+| `move_file`                 | `false`      | `false`        | `true`          | 删除源文件                                       |
 
-> Note: `idempotentHint` and `destructiveHint` are meaningful only when `readOnlyHint` is `false`, as defined by the MCP spec.
+> 注意：按 MCP 规范定义，仅当 `readOnlyHint` 为 `false` 时，`idempotentHint` 和 `destructiveHint` 才有意义。
 
-## Usage with Claude Desktop
-Add this to your `claude_desktop_config.json`:
+## 在 Claude Desktop 中使用
+将此配置添加到 `claude_desktop_config.json`：
 
-Note: you can provide sandboxed directories to the server by mounting them to `/projects`. Adding the `ro` flag will make the directory readonly by the server.
+注意：可将沙箱目录挂载到 `/projects` 以提供给服务器。添加 `ro` 标志将使目录对服务器为只读。
 
 ### Docker
-Note: all directories must be mounted to `/projects` by default.
+注意：默认情况下，所有目录必须挂载到 `/projects`。
 
 ```json
 {
@@ -250,7 +249,7 @@ Note: all directories must be mounted to `/projects` by default.
 }
 ```
 
-On Windows, use `cmd /c` to launch `npx`:
+在 Windows 上，使用 `cmd /c` 启动 `npx`：
 
 ```json
 {
@@ -270,28 +269,28 @@ On Windows, use `cmd /c` to launch `npx`:
 }
 ```
 
-## Usage with VS Code
+## 在 VS Code 中使用
 
-For quick installation, click the installation buttons below...
+快速安装可点击下方安装按钮……
 
 [![Install with NPX in VS Code](https://img.shields.io/badge/VS_Code-NPM-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=filesystem&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40modelcontextprotocol%2Fserver-filesystem%22%2C%22%24%7BworkspaceFolder%7D%22%5D%7D) [![Install with NPX in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-NPM-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=filesystem&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40modelcontextprotocol%2Fserver-filesystem%22%2C%22%24%7BworkspaceFolder%7D%22%5D%7D&quality=insiders)
 
 [![Install with Docker in VS Code](https://img.shields.io/badge/VS_Code-Docker-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=filesystem&config=%7B%22command%22%3A%22docker%22%2C%22args%22%3A%5B%22run%22%2C%22-i%22%2C%22--rm%22%2C%22--mount%22%2C%22type%3Dbind%2Csrc%3D%24%7BworkspaceFolder%7D%2Cdst%3D%2Fprojects%2Fworkspace%22%2C%22mcp%2Ffilesystem%22%2C%22%2Fprojects%22%5D%7D) [![Install with Docker in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Docker-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=filesystem&config=%7B%22command%22%3A%22docker%22%2C%22args%22%3A%5B%22run%22%2C%22-i%22%2C%22--rm%22%2C%22--mount%22%2C%22type%3Dbind%2Csrc%3D%24%7BworkspaceFolder%7D%2Cdst%3D%2Fprojects%2Fworkspace%22%2C%22mcp%2Ffilesystem%22%2C%22%2Fprojects%22%5D%7D&quality=insiders)
 
-For manual installation, you can configure the MCP server using one of these methods:
+手动安装时，可使用以下方法之一配置 MCP 服务器：
 
-**Method 1: User Configuration (Recommended)**
-Add the configuration to your user-level MCP configuration file. Open the Command Palette (`Ctrl + Shift + P`) and run `MCP: Open User Configuration`. This will open your user `mcp.json` file where you can add the server configuration.
+**方法 1：用户配置（推荐）**
+将配置添加到用户级 MCP 配置文件。打开命令面板（`Ctrl + Shift + P`）并运行 `MCP: Open User Configuration`。这将打开用户 `mcp.json` 文件，您可在其中添加服务器配置。
 
-**Method 2: Workspace Configuration**
-Alternatively, you can add the configuration to a file called `.vscode/mcp.json` in your workspace. This will allow you to share the configuration with others.
+**方法 2：工作区配置**
+或者，可将配置添加到工作区中的 `.vscode/mcp.json` 文件。这样可与他人共享配置。
 
-> For more details about MCP configuration in VS Code, see the [official VS Code MCP documentation](https://code.visualstudio.com/docs/copilot/customization/mcp-servers).
+> 有关 VS Code 中 MCP 配置的更多详情，请参阅[官方 VS Code MCP 文档](https://code.visualstudio.com/docs/copilot/customization/mcp-servers)。
 
-You can provide sandboxed directories to the server by mounting them to `/projects`. Adding the `ro` flag will make the directory readonly by the server.
+可将沙箱目录挂载到 `/projects` 以提供给服务器。添加 `ro` 标志将使目录对服务器为只读。
 
 ### Docker
-Note: all directories must be mounted to `/projects` by default. 
+注意：默认情况下，所有目录必须挂载到 `/projects`。
 
 ```json
 {
@@ -328,7 +327,7 @@ Note: all directories must be mounted to `/projects` by default.
 }
 ```
 
-On Windows, use:
+在 Windows 上，使用：
 
 ```json
 {
@@ -347,14 +346,14 @@ On Windows, use:
 }
 ```
 
-## Build
+## 构建
 
-Docker build:
+Docker 构建：
 
 ```bash
 docker build -t mcp/filesystem -f src/filesystem/Dockerfile .
 ```
 
-## License
+## 许可证
 
-This MCP server is licensed under the MIT License. This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the MIT License. For more details, please see the LICENSE file in the project repository.
+本 MCP 服务器采用 MIT 许可证。这意味着您可自由使用、修改和分发该软件，但须遵守 MIT 许可证的条款与条件。更多详情请参阅项目仓库中的 LICENSE 文件。
