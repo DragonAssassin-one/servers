@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "memory": {
+      "command": "/opt/homebrew/bin/npx",
+      "args": ["-y", "@modelcontextprotocol/server-memory"]
+    },
+    "time": {
+      "command": "/Users/Admin/.local/bin/uvx",
+      "args": ["mcp-server-time"]
+    },
+    "git": {
+      "command": "/Users/Admin/.local/bin/uvx",
+      "args": [
+        "mcp-server-git",
+        "--repository",
+        "/Users/Admin/项目/servers"
+      ]
+    },
+    "filesystem": {
+      "command": "/opt/homebrew/bin/npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/Admin/项目/servers"
+      ]
+    }
+  }
+}
